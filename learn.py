@@ -3,9 +3,9 @@ import tensorflow as tf
 from load_data import load_data
 
 class ConvNet:
-    def __init__(self):
-        self.train, self.test = load_data()
-        self.image_size = 28
+    def __init__(self, img_size):
+        self.train, self.test = load_data(img_size=img_size)
+        self.img_size = img_size
         self.num_labels = 2
         self.num_steps = 250
         self.batch_size = 50
@@ -28,7 +28,7 @@ class ConvNet:
     def learn(self):
         # placeholders for inputs and labels
         x = tf.placeholder(tf.float32,
-                           shape=[None, self.image_size, self.image_size, 3])
+                           shape=[None, self.img_size, self.img_size, 3])
         y = tf.placeholder(tf.float32, shape=[None, 2])
 
         # first conv layer
@@ -46,10 +46,13 @@ class ConvNet:
         h_pool2 = self.max_pool_2x2(h_conv2)
 
         # fully connected layer
-        W_fc1 = self.weight_variable([7 * 7 * 64, 1024], name='W_fc1')
+        reduced_img_size = self.img_size // 4
+        W_fc1 = self.weight_variable(
+            [reduced_img_size * reduced_img_size * 64, 1024], name='W_fc1')
         b_fc1 = self.bias_variable([1024], name='b_fc1')
 
-        h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
+        h_pool2_flat = tf.reshape(
+            h_pool2, [-1, reduced_img_size * reduced_img_size * 64])
         h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
         # dropout
@@ -105,26 +108,11 @@ class ConvNet:
                     print('Step: %d' % (step))
                     print('Loss: %f' % (l))
 
-            # loss for all
-            # dogs
-            inputs_dog = self.train[0]
-            labels_dog = np.array([[1, 0] for _ in range(len(inputs_dog))])
-
-            # cats
-            inputs_cat = self.train[1]
-            labels_cat = np.array([[0, 1] for _ in range(len(inputs_cat))])
-
-            batch_x = np.vstack([inputs_dog, inputs_cat])
-            batch_y = np.vstack([labels_dog, labels_cat])
-
-            feed_dict = {x: batch_x/255, y: batch_y, keep_prob: 0.5}
-
-            l = session.run(loss, feed_dict=feed_dict)
-            print('Loss for all: %f' % (l))
-
-            path = saver.save(session, '%s.ckpt' % type(self).__name__)
+            print('Done: Learning')
+            path = saver.save(session, '{name}.{size}.ckpt'.format(
+                name=type(self).__name__,
+                size=self.img_size))
             print('saved in file: %s' % path)
-            print('Done')
 
     def predict(self):
         print('Pridicting...')
@@ -147,10 +135,13 @@ class ConvNet:
         h_pool2 = self.max_pool_2x2(h_conv2)
 
         # fully connected layer
-        W_fc1 = self.weight_variable([7 * 7 * 64, 1024], name='W_fc1')
+        reduced_img_size = self.img_size // 4
+        W_fc1 = self.weight_variable(
+            [reduced_img_size * reduced_img_size * 64, 1024], name='W_fc1')
         b_fc1 = self.bias_variable([1024], name='b_fc1')
 
-        h_pool2_flat = tf.reshape(h_pool2, [-1, 7*7*64])
+        h_pool2_flat = tf.reshape(
+            h_pool2, [-1, reduced_img_size * reduced_img_size * 64])
         h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
         # dropout
@@ -176,20 +167,25 @@ class ConvNet:
 
         with tf.Session() as session:
             try:
-                saver.restore(session, '%s.ckpt' % type(self).__name__)
+                saver.restore(session, '{name}.{size}.ckpt'.format(
+                    name=type(self).__name__,
+                    size=self.img_size))
                 print('Restored')
             except:
                 print('Learn')
                 self.learn()
-                saver.restore(session, '%s.ckpt' % type(self).__name__)
+                saver.restore(session, '{name}.{size}.ckpt'.format(
+                    name=type(self).__name__,
+                    size=self.img_size))
 
             prob = session.run(y_prob)[:, 0]
             indexed = np.hstack([np.arange(1, len(prob)+1)[:, None],
                                 prob[:, None]])
-            np.savetxt('predictions.csv', indexed, fmt=['%d', '%.3f'],
+            np.savetxt('predictions.{size}.csv'.format(size=self.img_size),
+                       indexed, fmt=['%d', '%.3f'],
                        header='Id,Label', delimiter=',', comments='')
             print('Done')
             return prob
 
-convnet = ConvNet()
+convnet = ConvNet(64)
 y = convnet.predict()
