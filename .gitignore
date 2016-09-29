@@ -3,3 +3,8 @@ train/
 test.zip
 train.zip
 sample_submission.csv
+*.npz
+*.ckpt
+*.ckpt.meta
+checkpoint
+*.csv
