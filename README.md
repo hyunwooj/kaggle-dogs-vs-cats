@@ -8,3 +8,15 @@ The result of this network is very bad. It is even worse than predicting all ima
 
 ## Take #2
 I increased the input size to 64*64 but it did not improved the result at all.
+
+## Input Investigation
+- Training
+  - 25,000 images: 12,500 dogs and 12,500 cats
+  - Max, mean, min of dimensions:
+    - Width: 1050, 404, 42
+    - Height: 768, 360, 32
+- Test
+  - 12,500 images
+  - Max, mean, min of dimensions:
+    - Width: 500, 404, 37
+    - Height: 500, 360, 44
