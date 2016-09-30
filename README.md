@@ -15,8 +15,10 @@ I increased the input size to 64*64 but it did not improved the result at all.
   - Max, mean, min of dimensions:
     - Width: 1050, 404, 42
     - Height: 768, 360, 32
+  - Mean ratio of width to height: 1.157
 - Test
   - 12,500 images
   - Max, mean, min of dimensions:
     - Width: 500, 404, 37
     - Height: 500, 360, 44
+  - Mean ratio of width to height: 1.154
